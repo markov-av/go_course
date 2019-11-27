@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -16,16 +17,33 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
+func GetFileSize1(filepath string) (int64, error) {
+	fi, err := os.Stat(filepath)
+	if err != nil {
+		return 0, err
+	}
+	// get the size
+	return fi.Size(), nil
+}
+
 func dirTree(out io.Writer, path string, printFiles bool) error {
 	var space string
 	var words []string
+	var byteSize int64
+	var fileSize string
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			for idx, f := range strings.Split(path, "/") {
-				if idx == 0 {
-					continue
-				}
-				space = strings.Repeat("|    ", idx/2)
+			byteSize, _ = GetFileSize1(path)
+			if byteSize == 0 {
+				fileSize = "(empty)"
+			} else {
+				fileSize = "(" + fmt.Sprintf("%v", byteSize) + "b)"
+			}
+			for idx, f := range strings.Split(path+fileSize, "/") {
+				//if idx == 0 {
+				//	continue
+				//}
+				space = strings.Repeat("|    ", idx)
 				if contains(words, space+"├───"+f) {
 					continue
 				} else {
@@ -48,10 +66,9 @@ func dirTree(out io.Writer, path string, printFiles bool) error {
 		}
 	}
 	words[len(words)-1] = strings.Replace(words[len(words)-1], "├───", "└───", -1)
-	//for _, i := range words {
-	//	fmt.Println(i)
-	//}
-
+	for _, i := range words {
+		fmt.Println(i)
+	}
 	return err
 }
 
