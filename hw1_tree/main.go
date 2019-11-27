@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -18,33 +17,51 @@ func stringInSlice(a string, list []string) bool {
 }
 
 func dirTree(out io.Writer, path string, printFiles bool) error {
-	var files []string
-	var buf []string
+	var space string
+	var words []string
 	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			var counter int
-			for _, f := range strings.Split(path, "/") {
-				if stringInSlice(f, buf) {
-					counter += 4
-				} else if strings.Index(f, ".") != -1 {
-					space := strings.Repeat(" ", counter)
-					files = append(files, space+"├───"+f)
-					counter = 0
+			for idx, f := range strings.Split(path, "/") {
+				if idx == 0 {
+					continue
+				}
+				space = strings.Repeat("|    ", idx/2)
+				if contains(words, space+"├───"+f) {
+					continue
 				} else {
-					space := strings.Repeat(" ", counter)
-					files = append(files, space+"└───"+f)
-					buf = append(buf, f)
-					counter += 4
+					words = append(words, space+"├───"+f)
 				}
 			}
-			counter = 0
 		}
 		return nil
 	})
-	for _, path := range files {
-		fmt.Println(path)
+	var prevLen = 0
+	var prevStr string
+	for idx, str := range words {
+		result := strings.Split(str, "├───")
+		if prevLen > len(result[0]) {
+			words[idx-1] = strings.Replace(prevStr, "├───", "└───", -1)
+			prevLen = 0
+		} else {
+			prevStr = str
+			prevLen = len(result[0])
+		}
 	}
+	words[len(words)-1] = strings.Replace(words[len(words)-1], "├───", "└───", -1)
+	//for _, i := range words {
+	//	fmt.Println(i)
+	//}
+
 	return err
+}
+
+func contains(arr []string, str string) bool {
+	for _, a := range arr {
+		if a == str {
+			return true
+		}
+	}
+	return false
 }
 
 func main() {
