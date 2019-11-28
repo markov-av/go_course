@@ -8,15 +8,6 @@ import (
 	"strings"
 )
 
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
 func GetFileSize1(filepath string) (int64, error) {
 	fi, err := os.Stat(filepath)
 	if err != nil {
@@ -40,9 +31,9 @@ func dirTree(out io.Writer, path string, printFiles bool) error {
 				fileSize = "(" + fmt.Sprintf("%v", byteSize) + "b)"
 			}
 			for idx, f := range strings.Split(path+fileSize, "/") {
-				//if idx == 0 {
-				//	continue
-				//}
+				if idx == 0 {
+					continue
+				}
 				space = strings.Repeat("|    ", idx)
 				if contains(words, space+"├───"+f) {
 					continue
@@ -66,9 +57,21 @@ func dirTree(out io.Writer, path string, printFiles bool) error {
 		}
 	}
 	words[len(words)-1] = strings.Replace(words[len(words)-1], "├───", "└───", -1)
-	for _, i := range words {
-		fmt.Println(i)
+	var tree []string
+	if printFiles {
+		for _, i := range words {
+			if strings.ContainsAny(i[5:], ".") {
+				continue
+			} else {
+				tree = append(tree, i[5:], "\n ")
+			}
+		}
+	} else {
+		for _, i := range words {
+			tree = append(tree, i[5:], "\n ")
+		}
 	}
+	fmt.Println(tree)
 	return err
 }
 
