@@ -13,14 +13,14 @@ func GetFileSize1(filepath string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	// get the size
 	return fi.Size(), nil
 }
 
 type Tuple struct {
-	Name  string
-	Index int
-	path  string
+	Name    string
+	Index   int
+	path    string
+	symbols string
 }
 
 type Dirs struct {
@@ -43,9 +43,6 @@ func (arr *Dirs) CheckValue(item Tuple) bool {
 
 func dirTree(out io.Writer, path string, printFiles bool) error {
 	var space string
-	//var dirs []string
-	var count int
-	var tree []string
 	var fileSize string
 	items := []Tuple{}
 	dirs := Dirs{items}
@@ -58,101 +55,36 @@ func dirTree(out io.Writer, path string, printFiles bool) error {
 				fileSize = " (" + fmt.Sprintf("%v", byteSize) + "b)"
 			}
 		}
-		fmt.Println(path)
 		if !info.IsDir() {
 			for idx, f := range strings.Split(path+fileSize, "/")[1:] {
-				item := Tuple{Name: f, Index: idx + 1, path: strings.Split(path+fileSize, f)[0]}
+				if strings.ContainsAny(f, ".") && !printFiles {
+					continue
+				}
+				item := Tuple{Name: f, Index: idx, path: strings.Split(path+fileSize, f)[0]}
 				if dirs.CheckValue(item) {
 					continue
 				} else {
 					dirs.AddItem(item)
-					//fmt.Println(item)
 				}
-				count += 1
 			}
-			//for _, item := range dirs.Items {
-			//	space = strings.Repeat("│       ", item.Index)
-			//	tree = append(tree, space + "├───" + item.Name + "\n")
-			//}
-		}
-
-		for _, item := range dirs.Items {
-			space = strings.Repeat("│       ", item.Index)
-			tree = append(tree, space+"├───"+item.Name+"\n")
 		}
 		return err
 	})
-	for idx, str := range tree {
-		if idx == 0 {
-			continue
-		} else {
-			if len(strings.Split(str, "├───")[0]) < len(strings.Split(tree[idx-1], "├───")[0]) {
-				tree[idx-1] = strings.Replace(tree[idx-1], "├───", "└───", -1)
+	for idx, item := range dirs.Items {
+		space = strings.Repeat("        ", item.Index)
+		for i := idx + 1; i < len(dirs.Items); i++ {
+			if item.Index == dirs.Items[i].Index && item.path == dirs.Items[i].path {
+				dirs.Items[idx].symbols = "|" + space + "├───" + item.Name
+				break
+			} else {
+				dirs.Items[idx].symbols = "|" + space + "└───" + item.Name
 			}
 		}
 	}
-
-	//tree[len(tree)-1] = strings.Replace(tree[len(tree)-1], "├───", "└───", -1)
-	for _, i := range tree[len(tree)-count:] {
-		fmt.Fprint(out, i[10:])
+	for _, item := range dirs.Items {
+		fmt.Println(item.symbols)
 	}
 	return err
-}
-
-//		for idx, f := range strings.Split(path+fileSize, "/") {
-//			//if idx == 0 {
-//			//	continue
-//			//}
-//			space = strings.Repeat("│       ", idx)
-//			if contains(words, space+"├───"+f) {
-//				continue
-//			} else {
-//				words = append(words, space+"├───"+f)
-//			}
-//		}
-//	}
-//	return nil
-//})
-//var prevLen = 0
-//var prevStr string
-//for idx, str := range words {
-//	result := strings.Split(str, "├───")
-//	if prevLen > len(result[0]) {
-//		words[idx-1] = strings.Replace(prevStr, "├───", "└───", -1)
-//		prevLen = 0
-//	} else {
-//		prevStr = str
-//		prevLen = len(result[0])
-//	}
-//}
-//words[len(words)-1] = strings.Replace(words[len(words)-1], "├───", "└───", -1)
-//var tree string
-//if printFiles {
-//	for _, i := range words {
-//		tree = tree + "\n " + i[5:]
-//	}
-//} else {
-//	for _, i := range words {
-//		if strings.ContainsAny(i[5:], ".") {
-//			continue
-//		} else {
-//			tree = tree + "\n " + i[5:]
-//		}
-//	}
-//}
-//fmt.Fprintln(out, tree)
-////fmt.Println(tree)
-//	return err
-//}
-//
-
-func contains(arr []string, str string) bool {
-	for _, a := range arr {
-		if a == str {
-			return true
-		}
-	}
-	return false
 }
 
 func main() {
