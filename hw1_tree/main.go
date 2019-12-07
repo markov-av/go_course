@@ -74,15 +74,38 @@ func dirTree(out io.Writer, path string, printFiles bool) error {
 		space = strings.Repeat("        ", item.Index)
 		for i := idx + 1; i < len(dirs.Items); i++ {
 			if item.Index == dirs.Items[i].Index && item.path == dirs.Items[i].path {
-				dirs.Items[idx].symbols = "|" + space + "├───" + item.Name
+				dirs.Items[idx].symbols = space + "├───" + item.Name
 				break
 			} else {
-				dirs.Items[idx].symbols = "|" + space + "└───" + item.Name
+				dirs.Items[idx].symbols = space + "└───" + item.Name
+			}
+		}
+	}
+	for idx, item := range dirs.Items {
+		char := strings.Index(item.symbols, "├")
+		if char > -1 {
+			for i := 0; i < len(dirs.Items[idx+1:]); i++ {
+				if len(string([]rune(dirs.Items[idx+1:][i].symbols))) != 0 && string([]rune(dirs.Items[idx+1:][i].symbols)[char]) == " " {
+					dirs.Items[idx+1:][i].symbols =
+						string([]rune(dirs.Items[idx+1:][i].symbols)[:char]) + "|" + string([]rune(dirs.Items[idx+1:][i].symbols)[char+1:])
+				} else {
+					break
+				}
+			}
+		}
+	}
+	if printFiles {
+		for i := len(dirs.Items) - 1; i >= 0; i-- {
+			if len(string([]rune(dirs.Items[i].symbols))) != 0 && string([]rune(dirs.Items[i].symbols)[0]) == "├" {
+				dirs.Items[i].symbols = "└" + string([]rune(dirs.Items[i].symbols)[1:])
+				break
+			} else if len(string([]rune(dirs.Items[i].symbols))) != 0 && string([]rune(dirs.Items[i].symbols)[0]) == "|" {
+				dirs.Items[i].symbols = " " + string([]rune(dirs.Items[i].symbols)[1:])
 			}
 		}
 	}
 	for _, item := range dirs.Items {
-		fmt.Println(item.symbols)
+		fmt.Fprintln(out, item.symbols)
 	}
 	return err
 }
