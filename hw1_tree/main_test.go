@@ -69,6 +69,15 @@ func TestTreeDir(t *testing.T) {
 		t.Errorf("test for OK Failed - error")
 	}
 	result := out.String()
+	//for idx, item := range strings.Split(result, "\n") {
+	//	if len(item) != len(strings.Split(testDirResult, "\n")[idx]) {
+	//		fmt.Println(len(item), len(strings.Split(testDirResult, "\n")[idx]))
+	//		fmt.Println(item, strings.Split(testDirResult, "\n")[idx])
+	//	}
+	//}
+	//for idx, item := range strings.Split(testDirResult, "\n") {
+	//	fmt.Println(idx, len(item), item)
+	//}
 	if result != testDirResult {
 		t.Errorf("test for OK Failed - results not match\nGot:\n%v\nExpected:\n%v", result, testDirResult)
 	}
